@@ -8,6 +8,8 @@ namespace WirelessMediaPrakticniZadatak
     [Table("Product")]
     public partial class Product
     {
+        // Annotations are put in ProductView class which is used as a model for create and edit views
+
         public int ProductId { get; set; }
         [Required]
         [StringLength(30)]

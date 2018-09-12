@@ -19,9 +19,9 @@ namespace WirelessMediaPrakticniZadatak.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string message = "")
         {
-            // include categories and companies so I can their names
+            // including categories and companies so I can get their names
             var products = _context.Products.Include(p => p.Category).Include(p => p.Manufacturer).Include(p => p.Supplier);
 
             // make ProductViews foreach product
@@ -42,6 +42,7 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                 productViews.Add(prView);
             }
 
+            ViewBag.Message = message;
             return View(productViews);
         }
 
@@ -81,7 +82,7 @@ namespace WirelessMediaPrakticniZadatak.Controllers
 
                 _context.Add(product);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { message = $"<strong>{product.Name}</strong> has been created" });
             }
 
             // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
@@ -169,7 +170,7 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { message = $"<strong>{product.Name}</strong> has been edited" });
             }
 
             // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
@@ -267,7 +268,7 @@ namespace WirelessMediaPrakticniZadatak.Controllers
             var product = await _context.Products.SingleOrDefaultAsync(m => m.ProductId == id);
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { message = $"<strong>{product.Name}</strong> has been deleted" });
         }
 
         private bool ProductExists(int id)

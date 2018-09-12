@@ -38,7 +38,7 @@
             <div class="form-group">
                 <label asp-for="Manufacturer" class="control-label"></label>
                 <input value="@Model.Manufacturer" name="Manufacturer" class="form-control" list="Companies"
-                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="4" data-val-length-max="40" data-val-required="Manufacturer field is required" />
+                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="2" data-val-length-max="40" data-val-required="Manufacturer field is required" />
                 <datalist id="Companies">
                     @foreach (Company c in ViewBag.Companies)
                     {
@@ -50,7 +50,7 @@
             <div class="form-group">
                 <label asp-for="Supplier" class="control-label"></label>
                 <input value="@Model.Supplier" name="Supplier" class="form-control" list="Companies"
-                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="4" data-val-length-max="40" data-val-required="Supplier field is required" />
+                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="2" data-val-length-max="40" data-val-required="Supplier field is required" />
                 <span asp-validation-for="Supplier" class="text-danger"></span>
             </div>
             <div class="form-group">

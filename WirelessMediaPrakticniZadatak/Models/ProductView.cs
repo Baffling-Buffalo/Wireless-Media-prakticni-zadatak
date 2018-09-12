@@ -5,7 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace WirelessMediaPrakticniZadatak.Models
-{
+{  
+    // Used as a model for create and edit views
     public class ProductView
     {
         public int? ProductId { get; set; }
