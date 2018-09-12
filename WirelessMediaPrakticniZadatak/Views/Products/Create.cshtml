@@ -9,7 +9,7 @@
 <h4>Product</h4>
 <hr />
 <div class="row">
-    <div class="col-md-5 col-lg-7">
+    <div class="col-md-5 col-lg-6">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
@@ -24,16 +24,33 @@
             </div>
             <div class="form-group">
                 <label asp-for="Category" class="control-label"></label>
-                <input role="textbox" rows="3" asp-for="Category" class ="form-control" />
+                <input value="@Model?.Category" name="Category" class="form-control" list="Category"
+                       data-val="true" data-val-length="Min 3 max 30 chars" data-val-length-min="3" data-val-length-max="30" data-val-required="Category field is required" />
+                <datalist id="Category">
+                    @foreach (Category c in ViewBag.Categories)
+                    {
+                        <option value="@c.Name"></option>
+                    }
+                </datalist>
+                <span asp-validation-for="Category" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Manufacturer" class="control-label"></label>
-                <input asp-for="Manufacturer" class="form-control" />
+                <input value="@Model?.Manufacturer" name="Manufacturer" class="form-control" list="Companies"
+                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="4" data-val-length-max="40" data-val-required="Manufacturer field is required" />
+                <datalist id="Companies">
+                    @foreach (Company c in ViewBag.Companies)
+                    {
+                        <option value="@c.Name"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Manufacturer" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Supplier" class="control-label"></label>
-                <input asp-for="Supplier" class ="form-control" />
+                <input value="@Model?.Supplier" name="Supplier" class="form-control" list="Companies"
+                       data-val="true" data-val-length="Min 4 max 40 chars" data-val-length-min="4" data-val-length-max="40" data-val-required="Supplier field is required" />
+                <span asp-validation-for="Supplier" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Price" class="control-label"></label>

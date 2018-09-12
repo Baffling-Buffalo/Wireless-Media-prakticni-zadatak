@@ -15,10 +15,13 @@ namespace WirelessMediaPrakticniZadatak.Models
         [StringLength(70, MinimumLength = 3, ErrorMessage = "Desriptions length must be between 3 and 70 characters")]
         public string Description { get; set; }
         [Required]
+        [StringLength(30, MinimumLength = 3, ErrorMessage = "Category names length must be between 3 and 30 characters")]
         public string Category { get; set; }
         [Required]
+        [StringLength(40, MinimumLength = 2, ErrorMessage = "Min 2 and max 40 characters")]
         public string Manufacturer { get; set; }
         [Required]
+        [StringLength(40, MinimumLength = 2, ErrorMessage = "Min 2 and max 40 characters")]
         public string Supplier { get; set; }
         [Required]
         public decimal Price { get; set; }

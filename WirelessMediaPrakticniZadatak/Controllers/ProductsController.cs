@@ -21,8 +21,10 @@ namespace WirelessMediaPrakticniZadatak.Controllers
 
         public IActionResult Index()
         {
+            // include categories and companies so I can their names
             var products = _context.Products.Include(p => p.Category).Include(p => p.Manufacturer).Include(p => p.Supplier);
 
+            // make ProductViews foreach product
             List<ProductView> productViews = new List<ProductView>();
 
             foreach(var product in products)
@@ -43,28 +45,10 @@ namespace WirelessMediaPrakticniZadatak.Controllers
             return View(productViews);
         }
 
-        //public async Task<IActionResult> Details(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var product = await _context.Products
-        //        .Include(p => p.Category)
-        //        .Include(p => p.Manufacturer)
-        //        .Include(p => p.Supplier)
-        //        .SingleOrDefaultAsync(m => m.ProductId == id);
-        //    if (product == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(product);
-        //}
-
         public IActionResult Create()
         {
+            // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
+            FillDataListViewBags();
             return View();
         }
 
@@ -83,76 +67,16 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                 };
 
                 // Check if inputed category exists, if not, create new one
-                Category category = _context.Categories.SingleOrDefault(cat => cat.Name.ToLower() == productView.Category.ToLower());
-                if (category == null)
-                {
-                    // Create new category if null
-                    Category newCategory = new Category { Name = productView.Category, Description = "" };
-                    try
-                    {
-                        _context.Categories.Add(newCategory);
-                        _context.SaveChanges();
-
-                        product.CategoryId = newCategory.CategoryId;
-                    }
-                    catch (Exception)
-                    {
-                        return View("Error");
-                    }
-                }
-                else
-                {
-                    // If not null apply the one you found
-                    product.CategoryId = category.CategoryId;
-                }
+                Category category = await GetOrCreateCategory(productView.Category);
+                product.CategoryId = category.CategoryId;
 
                 // Check if inputed manufacturer exists, if not, create new one
-                Company manufacturer = _context.Companies.SingleOrDefault(comp => comp.Name.ToLower() == productView.Manufacturer.ToLower());
-                if (manufacturer == null)
-                {
-                    // Create new company if null
-                    Company newCompany = new Company { Name = productView.Manufacturer};
-                    try
-                    {
-                        _context.Companies.Add(newCompany);
-                        _context.SaveChanges();
-
-                        product.ManufacturerId = newCompany.CompanyId;
-                    }
-                    catch (Exception)
-                    {
-                        return View("Error");
-                    }
-                }
-                else
-                {
-                    // If not null apply the one you found
-                    product.ManufacturerId = manufacturer.CompanyId;
-                }
+                Company manufacturer = await GetOrCreateCompany(productView.Manufacturer);
+                product.ManufacturerId = manufacturer.CompanyId;
 
                 // Check if inputed supplier exists, if not, create new one
-                Company supplier = _context.Companies.SingleOrDefault(comp => comp.Name.ToLower() == productView.Supplier.ToLower());
-                if (supplier == null)
-                {
-                    // Create new company if null
-                    Company newCompany = new Company { Name = productView.Supplier };
-                    try
-                    {
-                        _context.Companies.Add(newCompany);
-                        _context.SaveChanges();
-
-                        product.SupplierId = newCompany.CompanyId;
-                    }
-                    catch (Exception)
-                    {
-                        return View("Error");
-                    }
-                }
-                else
-                {
-                    // If not null apply the one you found
-                    product.SupplierId = supplier.CompanyId;
-                }
+                Company supplier = await GetOrCreateCompany(productView.Supplier);
+                product.SupplierId = supplier.CompanyId;
 
 
                 _context.Add(product);
@@ -160,6 +84,8 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
+            FillDataListViewBags();
             return View(productView);
         }
 
@@ -170,28 +96,63 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.SingleOrDefaultAsync(m => m.ProductId == id);
+            // include categories and companies so I can get their names
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Manufacturer)
+                .Include(p => p.Supplier)
+                .SingleOrDefaultAsync(m => m.ProductId == id);
+
             if (product == null)
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
-            ViewData["ManufacturerId"] = new SelectList(_context.Companies, "CompanyId", "Name", product.ManufacturerId);
-            ViewData["SupplierId"] = new SelectList(_context.Companies, "CompanyId", "Name", product.SupplierId);
-            return View(product);
+
+            // make a ProductView out of selected product
+            ProductView productView = new ProductView{
+                ProductId = product.ProductId,
+                Name = product.Name,
+                Description = product.Description,
+                Category = product.Category.Name,
+                Manufacturer = product.Manufacturer.Name,
+                Supplier = product.Supplier.Name,
+                Price = product.Price
+            };
+
+            // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
+            FillDataListViewBags();
+
+            return View(productView);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,Description,CategoryId,ManufacturerId,SupplierId,Price")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,Description,Category,Manufacturer,Supplier,Price")] ProductView productView)
         {
-            if (id != product.ProductId)
+            // Find product from ProductView
+            Product product = _context.Products.Find(productView.ProductId);
+
+            if (product == null)
+                return RedirectToAction(nameof(Index));
+
+            if (id != productView?.ProductId)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
+                // Edit changes to product object
+                product.Name = productView.Name;
+                product.Description = productView.Description;
+                product.Price = productView.Price;
+                Category category = await GetOrCreateCategory(productView.Category); // Find or create edited category
+                product.CategoryId = category.CategoryId; // Apply it's id
+                Company manufacturer = await GetOrCreateCompany(productView.Manufacturer); // Find or create edited manufacturer
+                product.ManufacturerId = manufacturer.CompanyId; // Apply it's id
+                Company supplier = await GetOrCreateCompany(productView.Supplier); // Find or create edited manufacturer
+                product.SupplierId = supplier.CompanyId; // Apply it's id
+
                 try
                 {
                     _context.Update(product);
@@ -210,10 +171,73 @@ namespace WirelessMediaPrakticniZadatak.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "Name", product.CategoryId);
-            ViewData["ManufacturerId"] = new SelectList(_context.Companies, "CompanyId", "Name", product.ManufacturerId);
-            ViewData["SupplierId"] = new SelectList(_context.Companies, "CompanyId", "Name", product.SupplierId);
-            return View(product);
+
+            // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
+            FillDataListViewBags();
+            return View(productView);
+        }
+
+        public void FillDataListViewBags()
+        {
+            // add categories and companies to viewbags so datalists in view can be filled with autosuggestions
+            ViewBag.Categories = _context.Categories.ToList();
+            ViewBag.Companies = _context.Companies.ToList();
+        }
+
+        // find category with name or create new one if it doesnt exist
+        public async Task<Category> GetOrCreateCategory(string categoryName)
+        {
+            // Search for category with that name
+            Category category = _context.Categories.SingleOrDefault(cat => cat.Name.ToLower() == categoryName.ToLower());
+            if (category == null)
+            {
+                // Create new category if null
+                Category newCategory = new Category { Name = categoryName };
+                try
+                {
+                    await _context.Categories.AddAsync(newCategory);
+                    await _context.SaveChangesAsync();
+
+                    return newCategory;
+                }
+                catch (Exception)
+                {
+                    return category; // which is null
+                }
+            }
+            else
+            {
+                // If not null return the one you found
+                return category;
+            }
+        }
+
+        // find company with name or create new one if it doesnt exist
+        public async Task<Company> GetOrCreateCompany(string companyName)
+        {
+            // Search for company with that name
+            Company company = _context.Companies.SingleOrDefault(comp => comp.Name.ToLower() == companyName.ToLower());
+            if (company == null)
+            {
+                // Create new company if null
+                Company newCompany = new Company { Name = companyName };
+                try
+                {
+                    await _context.Companies.AddAsync(newCompany);
+                    await _context.SaveChangesAsync();
+
+                    return newCompany;
+                }
+                catch (Exception)
+                {
+                    return company; // which is null
+                }
+            }
+            else
+            {
+                // If not null return the one you found
+                return company;
+            }
         }
 
         public async Task<IActionResult> Delete(int? id)
